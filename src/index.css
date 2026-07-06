@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-pink: #ff2fd6;
+  --color-neon-cyan: #2ff2ff;
+  --color-neon-purple: #9b30ff;
+  --color-bg-dark: #0a0714;
+  --color-bg-darker: #050309;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg-darker);
+  color: #f1f1f8;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  overscroll-behavior: none;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0714;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ff2fd6;
+  border-radius: 6px;
+}
+
+.neon-text {
+  text-shadow:
+    0 0 6px currentColor,
+    0 0 18px currentColor;
+}
+
+.neon-border {
+  box-shadow:
+    0 0 8px rgba(255, 47, 214, 0.6),
+    0 0 20px rgba(47, 242, 255, 0.35),
+    inset 0 0 12px rgba(155, 48, 255, 0.25);
+}
+
+.btn-neon {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.btn-neon:active {
+  transform: scale(0.96);
+}
