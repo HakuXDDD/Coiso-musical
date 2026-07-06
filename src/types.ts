@@ -21,6 +21,9 @@ export type GameStatus = "idle" | "playing" | "paused";
 
 export type PlaybackSpeed = 0.5 | 0.75 | 1;
 
+/** Tolerância de afinação para acerto via microfone, em semitons. */
+export type PitchTolerance = 0 | 1;
+
 export interface GameStats {
   score: number;
   combo: number;

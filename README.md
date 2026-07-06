@@ -40,10 +40,12 @@ src/
   components/
     NoteHighway.tsx           # pista Canvas 2D (6 cordas, notas caindo, linha de acerto)
     ScorePanel.tsx             # score, combo, accuracy, perfect/good/miss, play/pause/reset, velocidade
+    MicPanel.tsx               # ativar/desativar mic, status, volume, Hz, nota, tolerância
     MidiUpload.tsx             # botão de upload de arquivo .mid/.midi
   hooks/
-    useGameEngine.ts           # loop do jogo (rAF), tempo, teclado, julgamento de notas
+    useGameEngine.ts           # loop do jogo (rAF), tempo, teclado+mic, julgamento de notas
     useMidiParser.ts           # parsing de MIDI com @tonejs/midi
+    usePitchDetection.ts       # Web Audio API + autocorrelation (pitch em tempo real)
   utils/
     music.ts                   # conversão midi<->nota, mapeamento de corda, cores, janelas de acerto
     demoRiff.ts                 # riff demo em Am pentatonic
@@ -67,6 +69,19 @@ src/
 - Cada nota só pode ser contabilizada uma vez (hit ou miss).
 - Score, combo e accuracy atualizam em tempo real no painel lateral.
 
+## Como testar com microfone (v2)
+
+1. Clique em **Ativar microfone** e aceite a permissão do navegador.
+2. O painel mostra o status em tempo real:
+   - **Mic desligado** — microfone inativo.
+   - **Sem sinal** — volume abaixo do piso de ruído (sinal ignorado).
+   - **Escutando…** — há som, mas nenhuma altura definida foi encontrada.
+   - **Detectando** — nota identificada (mostra volume, frequência em Hz e a nota, ex.: E2, A2, D3, G3, B3, E4).
+3. A detecção usa **autocorrelation** (Web Audio API) e converte frequência para MIDI com `midi = round(69 + 12·log2(f/440))`.
+4. Com o jogo em Play, toque a nota esperada na guitarra quando ela chegar à linha de acerto — vale como acerto igual ao teclado (Perfect/Good pelas mesmas janelas de 80/180ms).
+5. **Tolerância de nota**: `Exata` exige o MIDI exato; `±1 semitom` aceita 1 semitom de diferença (útil para afinação imperfeita/latência).
+6. O modo teclado continua funcionando em paralelo — dá para misturar os dois.
+
 ## Como testar upload de MIDI
 
 1. Clique em **Upload MIDI** no painel lateral.
@@ -75,8 +90,7 @@ src/
 4. O jogo é resetado automaticamente (tempo volta a 0, score zera) e o nome da música no painel passa a ser o nome do arquivo enviado.
 5. Aperte **Play** para treinar a música carregada.
 
-## Fora de escopo nesta versão (v1)
+## Fora de escopo por enquanto
 
-- Sem reconhecimento por microfone (entrada é só teclado).
 - Sem suporte a MP3, YouTube ou IA.
 - Sem backend/servidor — tudo roda no navegador.

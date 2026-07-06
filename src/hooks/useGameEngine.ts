@@ -189,6 +189,43 @@ export function useGameEngine(initialNotes: NoteEvent[]) {
     [applyJudgement, emitJudgement],
   );
 
+  const handleMidiNote = useCallback(
+    (midi: number, toleranceSemitones: number) => {
+      if (statusRef.current !== "playing") return;
+      const now = timeRef.current;
+      let bestNote: NoteEvent | null = null;
+      let bestTimeDiff = Infinity;
+      let bestScore = Infinity;
+
+      for (const note of notesRef.current) {
+        if (note.hit || note.missed) continue;
+        const timeDiff = Math.abs(note.time - now);
+        if (timeDiff > GOOD_WINDOW_SEC) continue;
+        const pitchDiff = Math.abs(note.midi - midi);
+        if (pitchDiff > toleranceSemitones) continue;
+        // prioriza afinação exata e, em empate, a nota mais próxima no tempo
+        const score = timeDiff + pitchDiff * 0.1;
+        if (score < bestScore) {
+          bestScore = score;
+          bestTimeDiff = timeDiff;
+          bestNote = note;
+        }
+      }
+
+      if (!bestNote) return;
+
+      bestNote.hit = true;
+      const judgement = bestTimeDiff <= PERFECT_WINDOW_SEC ? "perfect" : "good";
+      applyJudgement(judgement);
+      emitJudgement({
+        stringIndex: bestNote.stringIndex,
+        judgement,
+        createdAt: performance.now(),
+      });
+    },
+    [applyJudgement, emitJudgement],
+  );
+
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.repeat) return;
@@ -225,6 +262,7 @@ export function useGameEngine(initialNotes: NoteEvent[]) {
     reset,
     setSpeed,
     loadNotes,
+    handleMidiNote,
     subscribeFrame,
     subscribeJudgement,
   };

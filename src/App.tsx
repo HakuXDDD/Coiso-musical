@@ -1,16 +1,43 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { MicPanel } from "./components/MicPanel";
 import { MidiUpload } from "./components/MidiUpload";
 import { NoteHighway } from "./components/NoteHighway";
 import { ScorePanel } from "./components/ScorePanel";
 import { useGameEngine } from "./hooks/useGameEngine";
-import type { NoteEvent, PlaybackSpeed } from "./types";
+import { usePitchDetection } from "./hooks/usePitchDetection";
+import type { NoteEvent, PitchTolerance, PlaybackSpeed } from "./types";
 import { DEMO_SONG_NAME, buildDemoRiff } from "./utils/demoRiff";
 
 function App() {
   const [songName, setSongName] = useState(DEMO_SONG_NAME);
   const [demoNotes] = useState<NoteEvent[]>(() => buildDemoRiff());
+  const [tolerance, setTolerance] = useState<PitchTolerance>(0);
+  const toleranceRef = useRef<PitchTolerance>(0);
 
   const engine = useGameEngine(demoNotes);
+  const { handleMidiNote } = engine;
+
+  const handleNoteOnset = useCallback(
+    (midi: number) => {
+      handleMidiNote(midi, toleranceRef.current);
+    },
+    [handleMidiNote],
+  );
+
+  const mic = usePitchDetection(handleNoteOnset);
+
+  function handleToleranceChange(next: PitchTolerance) {
+    toleranceRef.current = next;
+    setTolerance(next);
+  }
+
+  function handleToggleMic() {
+    if (mic.active) {
+      mic.stop();
+    } else {
+      void mic.start();
+    }
+  }
 
   function handlePlayPause() {
     if (engine.status === "playing") {
@@ -58,6 +85,17 @@ function App() {
             onPlayPause={handlePlayPause}
             onReset={engine.reset}
             onSpeedChange={handleSpeedChange}
+          />
+          <MicPanel
+            status={mic.status}
+            volume={mic.volume}
+            frequency={mic.frequency}
+            noteName={mic.noteName}
+            error={mic.error}
+            active={mic.active}
+            tolerance={tolerance}
+            onToggleMic={handleToggleMic}
+            onToleranceChange={handleToleranceChange}
           />
           <MidiUpload onNotesLoaded={handleNotesLoaded} />
         </aside>
