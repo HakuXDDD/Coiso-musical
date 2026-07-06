@@ -25,6 +25,29 @@ const JUDGEMENT_LABEL: Record<JudgementEvent["judgement"], string> = {
   miss: "MISS",
 };
 
+// ctx.roundRect só existe no Safari 16+; sem fallback, o desenho da nota
+// lança e derruba o loop do jogo em iPads mais antigos
+function traceRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
+  if (typeof ctx.roundRect === "function") {
+    ctx.roundRect(x, y, w, h, r);
+    return;
+  }
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
 export function NoteHighway({ notesRef, subscribeFrame, subscribeJudgement }: NoteHighwayProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -75,6 +98,7 @@ export function NoteHighway({ notesRef, subscribeFrame, subscribeJudgement }: No
 
       const width = container.clientWidth;
       const height = container.clientHeight;
+      if (width <= 0 || height <= 0) return;
       const hitLineY = height * HIT_LINE_RATIO;
       const laneWidth = width / STRING_KEYS.length;
 
@@ -157,7 +181,7 @@ export function NoteHighway({ notesRef, subscribeFrame, subscribeJudgement }: No
         const rectY = y - noteHeight;
         const radius = 8;
         ctx.beginPath();
-        ctx.roundRect(rectX, rectY, noteWidth, noteHeight, radius);
+        traceRoundedRect(ctx, rectX, rectY, noteWidth, noteHeight, radius);
         ctx.fill();
         ctx.restore();
       }
@@ -192,9 +216,9 @@ export function NoteHighway({ notesRef, subscribeFrame, subscribeJudgement }: No
   return (
     <div
       ref={containerRef}
-      className="relative h-full w-full overflow-hidden rounded-2xl neon-border bg-[#0a0714]"
+      className="relative h-full min-h-[420px] w-full overflow-hidden rounded-2xl neon-border bg-[#0a0714]"
     >
-      <canvas ref={canvasRef} className="block h-full w-full" />
+      <canvas ref={canvasRef} className="absolute inset-0" />
     </div>
   );
 }

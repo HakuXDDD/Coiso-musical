@@ -48,7 +48,13 @@ export function useGameEngine(initialNotes: NoteEvent[]) {
   }, [speed]);
 
   const emitJudgement = useCallback((event: JudgementEvent) => {
-    judgementListeners.current.forEach((listener) => listener(event));
+    judgementListeners.current.forEach((listener) => {
+      try {
+        listener(event);
+      } catch {
+        // um listener com erro não pode derrubar o loop do jogo
+      }
+    });
   }, []);
 
   const applyJudgement = useCallback(
@@ -100,7 +106,13 @@ export function useGameEngine(initialNotes: NoteEvent[]) {
   }, [applyJudgement, emitJudgement]);
 
   const notifyFrame = useCallback(() => {
-    frameListeners.current.forEach((listener) => listener(timeRef.current));
+    frameListeners.current.forEach((listener) => {
+      try {
+        listener(timeRef.current);
+      } catch {
+        // um erro de desenho não pode derrubar o loop do jogo
+      }
+    });
   }, []);
 
   const tick = useCallback(

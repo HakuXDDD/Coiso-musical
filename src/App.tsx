@@ -56,6 +56,12 @@ function App() {
     setSongName(name);
   }
 
+  // Reset zera tudo e volta para o riff demo, mesmo depois de um upload MIDI
+  function handleReset() {
+    engine.loadNotes(buildDemoRiff());
+    setSongName(DEMO_SONG_NAME);
+  }
+
   return (
     <div className="flex min-h-screen flex-col gap-4 bg-[#050309] p-4">
       <header className="flex items-center justify-between">
@@ -68,12 +74,21 @@ function App() {
       </header>
 
       <main className="flex flex-1 flex-col gap-4 md:flex-row">
-        <div className="min-h-[420px] flex-1 md:min-h-0">
-          <NoteHighway
-            notesRef={engine.notesRef}
-            subscribeFrame={engine.subscribeFrame}
-            subscribeJudgement={engine.subscribeJudgement}
-          />
+        <div className="flex flex-1 flex-col gap-2">
+          <div className="min-h-[420px] flex-1">
+            <NoteHighway
+              notesRef={engine.notesRef}
+              subscribeFrame={engine.subscribeFrame}
+              subscribeJudgement={engine.subscribeJudgement}
+            />
+          </div>
+          <p className="rounded-xl bg-white/5 px-3 py-2 text-center text-sm text-white/60">
+            Teclado:{" "}
+            <span className="font-bold tracking-widest text-cyan-300">
+              A S D F G H
+            </span>{" "}
+            = cordas 1 a 6 — aperte a tecla quando a nota chegar na linha ciano
+          </p>
         </div>
 
         <aside className="flex w-full flex-col gap-4 md:w-80">
@@ -83,7 +98,7 @@ function App() {
             speed={engine.speed}
             stats={engine.stats}
             onPlayPause={handlePlayPause}
-            onReset={engine.reset}
+            onReset={handleReset}
             onSpeedChange={handleSpeedChange}
           />
           <MicPanel

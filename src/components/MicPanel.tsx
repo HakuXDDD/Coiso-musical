@@ -14,7 +14,7 @@ interface MicPanelProps {
 }
 
 const STATUS_INFO: Record<MicStatus, { label: string; dotClass: string }> = {
-  off: { label: "Mic desligado", dotClass: "bg-white/30" },
+  off: { label: "Mic desligado — clique para ativar", dotClass: "bg-white/30" },
   listening: { label: "Escutando...", dotClass: "bg-cyan-400 animate-pulse" },
   "no-signal": { label: "Sem sinal", dotClass: "bg-amber-400" },
   detecting: { label: "Detectando", dotClass: "bg-emerald-400" },

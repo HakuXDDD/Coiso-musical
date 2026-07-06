@@ -21,6 +21,37 @@ export function frequencyToMidi(freq: number): number {
   return Math.round(69 + 12 * Math.log2(freq / 440));
 }
 
+function isIpadOrIphone(): boolean {
+  const ua = navigator.userAgent;
+  return (
+    /iPad|iPhone|iPod/.test(ua) ||
+    (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+  );
+}
+
+function describeMicError(err: unknown): string {
+  if (err instanceof DOMException) {
+    if (err.name === "NotAllowedError" || err.name === "SecurityError") {
+      if (isIpadOrIphone()) {
+        return (
+          "O navegador bloqueou o microfone. No iPad/Safari: toque em “aA” " +
+          "na barra de endereço → Configurações do Site → Microfone → Permitir, " +
+          "e clique em Ativar de novo. O jogo continua funcionando pelo teclado."
+        );
+      }
+      return (
+        "Permissão do microfone negada pelo navegador. Libere o microfone nas " +
+        "configurações do site e clique em Ativar de novo. O jogo continua " +
+        "funcionando pelo teclado."
+      );
+    }
+    if (err.name === "NotFoundError") {
+      return "Nenhum microfone encontrado. O jogo continua funcionando pelo teclado.";
+    }
+  }
+  return "Não foi possível acessar o microfone. O jogo continua funcionando pelo teclado.";
+}
+
 // Autocorrelation ACF2+ — retorna a frequência fundamental ou -1
 function autoCorrelate(buffer: Float32Array, sampleRate: number): number {
   const SIZE = buffer.length;
@@ -124,7 +155,20 @@ export function usePitchDetection(onNoteOnset?: (midi: number) => void) {
     setError(null);
 
     if (!navigator.mediaDevices?.getUserMedia) {
-      setError("Microfone não suportado neste navegador/contexto.");
+      setError(
+        "Microfone não disponível neste navegador/contexto. O jogo continua funcionando pelo teclado.",
+      );
+      return;
+    }
+
+    const AudioContextCtor =
+      window.AudioContext ??
+      (window as Window & { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+    if (!AudioContextCtor) {
+      setError(
+        "Web Audio não suportado neste navegador. O jogo continua funcionando pelo teclado.",
+      );
       return;
     }
 
@@ -137,7 +181,7 @@ export function usePitchDetection(onNoteOnset?: (midi: number) => void) {
         },
       });
 
-      const audioContext = new AudioContext();
+      const audioContext = new AudioContextCtor();
       await audioContext.resume();
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
@@ -200,11 +244,7 @@ export function usePitchDetection(onNoteOnset?: (midi: number) => void) {
 
       rafRef.current = requestAnimationFrame(analyze);
     } catch (err) {
-      const message =
-        err instanceof DOMException && err.name === "NotAllowedError"
-          ? "Permissão do microfone negada."
-          : "Não foi possível acessar o microfone.";
-      setError(message);
+      setError(describeMicError(err));
       stop();
     }
   }, [stop]);
